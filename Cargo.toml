@@ -11,3 +11,4 @@ serde_json = "1.0.149"
 winreg = "0.55.0"
 base64 = "0.22.0"
 windows = { version = "0.56.0", features = ["Win32_Security_Cryptography", "Win32_System_Registry"] }
+egui-material3 = "0.0.9"

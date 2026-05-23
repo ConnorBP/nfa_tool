@@ -1,17 +1,29 @@
 #![windows_subsystem = "windows"]
 use eframe::egui;
+use egui_material3::{
+    MaterialButton, MaterialCheckbox, MaterialSlider, MaterialChip,
+    MaterialBadge, MaterialSwitch,
+    theme::{setup_google_fonts, setup_local_fonts, setup_local_theme,
+           load_fonts, load_themes, update_window_background}
+};
 use winreg::RegKey;
 use base64::Engine;
 use clipboard::ClipboardProvider;
+
+mod window_frame;
+use crate::window_frame::custom_window_frame;
+
 fn main() -> eframe::Result<()> {
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
-            .with_inner_size([280.0, 100.0])
-            .with_resizable(true),
+            .with_decorations(false) // disable default OS title bar and borders
+            .with_inner_size([266.0, 240.0])
+            .with_resizable(true)
+            .with_transparent(true), // for rounded corners
         ..Default::default()
     };
     eframe::run_native(
-        "CS2NFA.SHOP Steam Tool",
+        "Steam Account Manager (S.A.M.)",
         options,
         Box::new(|_cc| Ok(Box::new(MyApp::default()))),
     )
@@ -21,14 +33,23 @@ struct MyApp {
     status: String,
 }
 impl eframe::App for MyApp {
+    fn clear_color(&self, _visuals: &egui::Visuals) -> [f32; 4] {
+        egui::Rgba::TRANSPARENT.to_array() // Make sure we don't paint anything behind the rounded corners
+    }
+
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        egui::CentralPanel::default().show(ctx, |ui| {
+        custom_window_frame(ctx, "S.A.M.", |ui| {
             ui.vertical_centered(|ui| {
                 ui.add_space(10.0);
+
+                ui.label("Steam Account Manager");
+                ui.add_space(10.0);
+                ui.label("Add accounts by copying 'username----token' to clipboard and clicking 'Add Account'.");
+                ui.label("Steam must be open to add the account, and will be automatically closed upon success.");
                 
                 ui.horizontal(|ui| {
                     if ui
-                        .add_sized([120.0, 30.0], egui::Button::new("Add Account"))
+                        .add(MaterialButton::new("Add Account"))
                         .clicked()
                     {
                         self.status = match handle_add_account() {
@@ -38,7 +59,7 @@ impl eframe::App for MyApp {
                     }
                     ui.add_space(6.0);
                     if ui
-                        .add_sized([120.0, 30.0], egui::Button::new("Clear Steam"))
+                        .add(MaterialButton::new("Clear Steam"))
                         .clicked()
                     {
                             self.status = match handle_clear_steam() {
@@ -53,6 +74,8 @@ impl eframe::App for MyApp {
             });
         });
     }
+
+
 }
 use std::fs;
 fn get_steam_path() -> Result<String, String> {
